@@ -251,8 +251,9 @@ class PythonSandbox:
             A numpy.ndarray that has been blurred.
         """
         ksize = int(2 * round(radius) + 1)
-        return cv2.blur(src, (ksize, ksize))
-
+        return cv2.blur(src, (ksize, ksize)
+        #return cv2.medianBlur(src, (ksize, ksize))
+        #return cv2.GaussianBlur(src,(ksize, ksize),0)
 
     @staticmethod
     def __cv_extractchannel(src, channel):
@@ -410,4 +411,3 @@ class PythonSandbox:
 
 
 #BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
-
