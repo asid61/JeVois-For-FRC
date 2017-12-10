@@ -1,0 +1,81 @@
+import libjevois as jevois
+import cv2
+import numpy as np
+
+## Simple test of programming JeVois modules in Python
+#
+# This module by default simply draws a cricle and a text message onto the grabbed video frames.
+#
+# Feel free to edit it and try something else. Note that this module does not import OpenCV, see the PythonOpenCV for a
+# minimal JeVois module written in Python that uses OpenCV.
+#
+# See http://jevois.org/tutorials for tutorials on getting started with programming JeVois in Python without having
+# to install any development software on your host computer.
+#
+# @author Laurent Itti
+# 
+# @videomapping YUYV 640 480 15.0 YUYV 640 480 15.0 JeVois PythonTest
+# @email itti\@usc.edu
+# @address University of Southern California, HNB-07A, 3641 Watt Way, Los Angeles, CA 90089-2520, USA
+# @copyright Copyright (C) 2017 by Laurent Itti, iLab and the University of Southern California
+# @mainurl http://jevois.org
+# @supporturl http://jevois.org/doc
+# @otherurl http://iLab.usc.edu
+# @license GPL v3
+# @distribution Unrestricted
+# @restrictions None
+# @ingroup modules
+class PythonTest:
+    # ###################################################################################################
+    ## Constructor
+    def __init__(self):
+        jevois.LINFO("PythonTest Constructor")
+
+    # ###################################################################################################
+    ## Process function with no USB output
+    def process(self, inframe):
+        jevois.LFATAL("process no usb not implemented")
+
+    # ###################################################################################################
+    ## Process function with USB output
+    def process(self, inframe, outframe):
+        jevois.LINFO("process with usb")
+
+        # Get the next camera image (may block until it is captured):
+        source0 = inimg = inframe.getCvBGR()
+        outimg = inimg = inframe.getCvBGR()
+        
+        # Example of getting pixel data from the input and copying to the output:
+        outimg = inimg
+
+        # Example of simple drawings:
+        #jevois.drawCircle(outimg, int(outimg.width/2), int(outimg.height/2), int(outimg.height/2.2), 2, jevois.YUYV.White)
+        #jevois.writeText(outimg, "Hi from Python!", 20, 20, jevois.YUYV.White, jevois.Font.Font10x20)
+        
+        # We are done with the output, ready to send it to host over USB:
+        outframe.sendCvBGR(outimg)
+
+        # Send a string over serial (e.g., to an Arduino). Remember to tell the JeVois Engine to display those messages,
+        # as they are turned off by default. For example: 'setpar serout All' in the JeVois console:
+        #jevois.sendSerial("DONE frame {}".format(self.frame));
+        #self.frame += 1
+
+    # ###################################################################################################
+    ## Parse a serial command forwarded to us by the JeVois Engine, return a string
+    def parseSerial(self, str):
+        jevois.LINFO("parseserial received command [{}]".format(str))
+        if str == "hello":
+            return self.hello()
+        return "ERR: Unsupported command"
+    
+    # ###################################################################################################
+    ## Return a string that describes the custom commands we support, for the JeVois help message
+    def supportedCommands(self):
+        # use \n seperator if your module supports several commands
+        return "hello - print hello using python"
+
+    # ###################################################################################################
+    ## Internal method that gets invoked as a custom command
+    def hello(self):
+        return "Hello from python!"
+        
