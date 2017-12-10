@@ -108,7 +108,7 @@ class PythonSandbox:
         self.__filter_contours_max_vertices = 1000000.0
         self.__filter_contours_min_vertices = 0.0
         self.__filter_contours_min_ratio = 0.3
-        self.__filter_contours_max_ratio = 1.0
+        self.__filter_contours_max_ratio = 0.9
 
         self.filter_contours_output = None
         #END CONSTANTS
@@ -251,10 +251,10 @@ class PythonSandbox:
             A numpy.ndarray that has been blurred.
         """
         ksize = int(2 * round(radius) + 1)
-        return cv2.blur(src, (ksize, ksize)
+        return cv2.blur(src, (ksize, ksize))
         #return cv2.medianBlur(src, (ksize, ksize))
         #return cv2.GaussianBlur(src,(ksize, ksize),0)
-
+                        
     @staticmethod
     def __cv_extractchannel(src, channel):
         """Extracts given channel from an image.
@@ -411,3 +411,4 @@ class PythonSandbox:
 
 
 #BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
+
