@@ -17,7 +17,7 @@ import numpy as np
 #
 # @author Anand Rajamani
 # 
-# @videomapping YUYV 320 240 60.0 YUYV 320 240 60.0 JeVois PythonSandbox
+# @videomapping YUYV 320 240 59.9 YUYV 320 240 59.9 JeVois PythonSandbox
 # @email anand.rajamani@scu.edu
 # @mainurl http://jevois.org
 # @supporturl http://jevois.org/doc
@@ -34,10 +34,11 @@ class PythonSandbox:
         # Instantiate a JeVois Timer to measure our processing framerate:
         self.timer = jevois.Timer("sandbox", 100, jevois.LOG_INFO)
 
-        #SPECIAL REPLACED BLUR CONSTANT
+        # SPECIAL REPLACED BLUR CONSTANT
         self.__blur_type = 0
-        
-        #ALL CONSTANTS GO HERE (make sure to remove the self.__blur_type line)
+
+    # ###################################################################################################  
+        # ALL CONSTANTS GO UNDER HERE (make sure to remove the self.__blur_type line)
         
         self.__blur_radius = 5.0229474757776655
 
@@ -111,10 +112,12 @@ class PythonSandbox:
         self.__filter_contours_max_ratio = 0.9
 
         self.filter_contours_output = None
-        #END CONSTANTS
-        
+
+        # END CONSTANTS  
     # ###################################################################################################
+
     ## Process function with USB output
+
     def process(self, inframe, outframe):
         # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
         # you need a grayscale image instead, just use getCvGRAY() instead of getCvBGR(). Also supported are getCvRGB()
@@ -125,7 +128,11 @@ class PythonSandbox:
         # Start measuring image processing time (NOTE: does not account for input conversion time):
         self.timer.start()
 
-##############################################################################################
+#################################################################################################
+
+        # BEGIN GRIP CODE
+
+#################################################################################################
         """
         Runs the pipeline and sets all outputs to new values.
         """
@@ -171,60 +178,62 @@ class PythonSandbox:
         (self.filter_contours_output) = self.__filter_contours(self.__filter_contours_contours, self.__filter_contours_min_area, self.__filter_contours_min_perimeter, self.__filter_contours_min_width, self.__filter_contours_max_width, self.__filter_contours_min_height, self.__filter_contours_max_height, self.__filter_contours_solidity, self.__filter_contours_max_vertices, self.__filter_contours_min_vertices, self.__filter_contours_min_ratio, self.__filter_contours_max_ratio)
 
 #################################################################################################
-        #END GRIP CODE
+
+        # END GRIP CODE
 
 ##################################################################################################
-        #PUT CUSTOM CODE HERE
+        
+        # DEFAULT CUSTOM CODE
 
-        def getArea(con): #Gets the area of the contour
+        def getArea(con): # Gets the area of the contour
             return cv2.contourArea(con)
 
-        def getYcoord(con): #Gets the Y coordinate of the contour
+        def getYcoord(con): # Gets the Y coordinate of the contour
             M = cv2.moments(con)
             cy = int(M['m01']/M['m00'])
             return cy
 
-        def findClosestY(conts): #Finds the contours that are closest in their Y coordinates and have reasonably close area
-            contourNum = len(conts) #Gets number of contours
-            sortedBy = sorted(conts, key=getYcoord) #sortedBy now has all the contours sorted by y-coordinate
-            delta = []
-            index = 1
-            for i in range(1, contourNum): #for loop through all the contours
-                delta.append(getYcoord(sortedBy[i]) - getYcoord(sortedBy[i-1])) #Find the difference in ycoord
-                if i > 1:
-                    #if delta is smaller than the last delta (closer ycoord) and areas are within 1/0.3 of each other
-                    if (delta[i-1] < delta[i-2]) and abs(getArea(sortedBy[i]) - getArea(sortedBy[i-1]) < getArea(sortedBy[i])*0.3): 
-                        index = i #store the index
-            newContours = [conts[index], conts[index-1]] #make a new array of contours
-            return newContours
+        def getXcoord(con): # Gets the X coordinate of the contour
+            M = cv2.moments(con)
+            cy = int(M['m10']/M['m00'])
+            return cy
 
-        def findLargestArea(conts): #Finds the contours with the largest area
-            contourNum = len(conts) #Gets number of contours
-            sortedBy = sorted(conts, key=getArea) #sortedBy now has all the contours sorted by area
-            if contourNum >= 2: #if there are 2 or more contours
-                newContours = [sortedBy[contourNum-1], sortedBy[contourNum-2]] #make a new array of contours
-            else:
-                newContours = sortedBy
-            return newContours
+        def sortByArea(conts) : # Returns an array sorted by area from smallest to largest
+            contourNum = len(conts) # Gets number of contours
+            sortedBy = sorted(conts, key=getArea) # sortedBy now has all the contours sorted by area
+            return sortedBy
+        
+##################################################################################################
+        
+        # PUT YOUR CUSTOM CODE HERE
+        
+##################################################################################################
+        
+        # Draws all contours on original image in red
+        cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
+        
+        # Gets number of contours
+        contourNum = len(self.filter_contours_output)
 
-        #cv2.drawContours(outimg, self.filter_contours_output, -1, (255, 0, 0), 1) #Draws all contours on original image in blue
-                               
-        contourNum = len(self.filter_contours_output) #Gets number of contours
-        if contourNum > 1: #if more than a single contour
-            newContours = findLargestArea(self.filter_contours_output) #find 2 largest areas
-            cv2.drawContours(outimg, newContours, -1, (0, 0, 255), 1) #Draw the two contours closest in ycoord in red
-                
-        elif contourNum == 1:
-            cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1) #Draw the contour in red            
-        
-                
-        #jevois.sendSerial("DONE frame {}".format(self.frame))
-######################### ########################################################################
-        #END CUSTOM CODE
-        
+        # Sorts contours by the smallest area first
+        newContours = sortByArea(self.filter_contours_output)       
+
+        # Send the contour data over Serial
+        for i in range (contourNum):
+            cnt = newContours[i]
+            x,y,w,h = cv2.boundingRect(cnt) # Get the stats of the contour including width and height
+            
+            # which contour, 0 is first
+            toSend = ("CON" + str(i) +  
+                     "area" + str(getArea(cnt)) +  # Area of contour
+                     "x" + str(round((getXcoord(cnt)*1000/320)-500, 2)) +  # x-coordinate of contour, -500 to 500 rounded to 2 decimal
+                     "y" + str(round(375-getYcoord(cnt)*750/240, 2)) +  # y-coordinate of contour, -375 to 375 rounded to 2 decimal
+                     "h" + str(round(h*750/240, 2)) +  # Height of contour, 0-750 rounded to 2 decimal
+                     "w" + str(round(w*1000/320, 2))) # Width of contour, 0-1000 rounded to 2 decimal
+            jevois.sendSerial(toSend)
+            
         # Write a title:
-        cv2.putText(outimg, "Anand's JeVois Code", (3, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255),
-                    1, cv2.LINE_AA)
+        cv2.putText(outimg, "Anand's JeVois Code", (3, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
         
         # Write frames/s info from our timer into the edge map (NOTE: does not account for output conversion time):
         fps = self.timer.stop()
@@ -235,10 +244,15 @@ class PythonSandbox:
         # Convert our BGR output image to video output format and send to host over USB. If your output image is not
         # BGR, you can use sendCvGRAY(), sendCvRGB(), or sendCvRGBA() as appropriate:
         outframe.sendCvBGR(outimg)
-        #outframe.sendCvGRAY(outimg)
-
+        # outframe.sendCvGRAY(outimg)
+        
+##################################################################################################
+        
+        # END CUSTOM CODE
+        
 ###################################################################################################
-        #FUNCTIONS GO HERE (Anything that starts with "@staticmethod")
+
+    # FUNCTIONS GO HERE (Anything that starts with "@staticmethod")
         
     @staticmethod
     def __blur(src, type, radius):
@@ -252,8 +266,8 @@ class PythonSandbox:
         """
         ksize = int(2 * round(radius) + 1)
         return cv2.blur(src, (ksize, ksize))
-        #return cv2.medianBlur(src, (ksize, ksize))
-        #return cv2.GaussianBlur(src,(ksize, ksize),0)
+        #return cv2.medianBlur(src, (ksize, ksize)) # Perform a Median Blur
+        #return cv2.GaussianBlur(src,(ksize, ksize),0) # Perform a Gaussian Blur
                         
     @staticmethod
     def __cv_extractchannel(src, channel):
