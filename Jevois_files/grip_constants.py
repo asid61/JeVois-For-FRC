@@ -82,7 +82,7 @@ class GripPipeline:
         self.__filter_contours_max_vertices = 1000000.0
         self.__filter_contours_min_vertices = 0.0
         self.__filter_contours_min_ratio = 0.3
-        self.__filter_contours_max_ratio = 1.0
+        self.__filter_contours_max_ratio = 0.9
 
         self.filter_contours_output = None
 
